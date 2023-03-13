@@ -1,0 +1,11 @@
+# IDE
+.idea
+
+# System
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# CMake and Vcpkg
+cmake-build-*
+vcpkg_installed
