@@ -9,6 +9,7 @@ find_package(PCL CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
+add_subdirectory(src)
 aux_source_directory(./src DIR_SRCS)
 
 # Executable

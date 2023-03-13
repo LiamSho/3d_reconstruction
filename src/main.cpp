@@ -14,22 +14,42 @@
  * details.
  */
 
+#include "utils/env_util.hpp"
 #include <iostream>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-void logger_init();
+int logger_init();
 
-int main() {
-    logger_init();
+int main(int argc, char **argv) {
+    auto logger_init_result = logger_init();
+    if (logger_init_result != 0) {
+        return -1;
+    }
 
     spdlog::info("Starting 3d_reconstruction");
+
+    std::string_view bag_file;
+    if (argc == 2) {
+        spdlog::debug("Use bag file parsed from command line");
+        bag_file = argv[1];
+    } else {
+        spdlog::debug("Use bag file parsed from environment variable");
+        bag_file = tdr::get_env("TDR_BAG_FILE_PATH");
+    }
+
+    if (bag_file.empty()) {
+        spdlog::error("Bag file path is empty");
+        return -2;
+    }
+
+    spdlog::info("Use bag file: {}", bag_file);
 
     return 0;
 }
 
-void logger_init() {
+int logger_init() {
     try {
         auto console_sink =
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -47,7 +67,10 @@ void logger_init() {
         spdlog::set_default_logger(std::make_shared<spdlog::logger>(
             "default", spdlog::sinks_init_list({console_sink, file_sink})));
 
+        return 0;
     } catch (const spdlog::spdlog_ex &ex) {
         std::cout << "Log initialization failed: " << ex.what() << std::endl;
+
+        return 1;
     }
 }
