@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="3d_reconstrcution Project" pattern="!file[3d_reconstruction]:vcpkg_installed//*&amp;&amp;!file[3d_reconstruction]:.idea//*" />
+</component>

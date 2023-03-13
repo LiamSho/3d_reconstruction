@@ -1,5 +1,6 @@
 # IDE
 .idea
+!.idea/scopes/*.xml
 
 # System
 .DS_Store
