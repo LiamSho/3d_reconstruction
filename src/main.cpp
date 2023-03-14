@@ -15,12 +15,16 @@
  */
 
 #include "utils/env_util.hpp"
+#include <GLFW/glfw3.h>
 #include <iostream>
+#include <librealsense2/rs.hpp>
+#include <pcl/pcl_base.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
 int logger_init();
+void lib_init();
 
 int main(int argc, char **argv) {
     auto logger_init_result = logger_init();
@@ -29,7 +33,9 @@ int main(int argc, char **argv) {
     }
 
     spdlog::info("Starting 3d_reconstruction");
+    lib_init();
 
+    // Get the path of .bag file
     std::string_view bag_file;
     if (argc == 2) {
         spdlog::debug("Use bag file parsed from command line");
@@ -40,7 +46,7 @@ int main(int argc, char **argv) {
     }
 
     if (bag_file.empty()) {
-        spdlog::error("Bag file path is empty");
+        spdlog::error("Failed to get .bag file path");
         return -2;
     }
 
@@ -73,4 +79,16 @@ int logger_init() {
 
         return 1;
     }
+}
+
+void lib_init() {
+    spdlog::info("============[LIB VERSIONS]=============");
+    spdlog::info("spdlog: {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR,
+                 SPDLOG_VER_PATCH);
+    spdlog::info("pcl: {}.{}.{}", PCL_MAJOR_VERSION, PCL_MINOR_VERSION,
+                 PCL_REVISION_VERSION);
+    spdlog::info("librealsense: {}", RS2_API_VERSION_STR);
+    spdlog::info("glfw: {}.{}.{}", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR,
+                 GLFW_VERSION_REVISION);
+    spdlog::info("=======================================");
 }

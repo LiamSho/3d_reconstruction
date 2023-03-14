@@ -18,21 +18,24 @@
 #define INC_3D_RECONSTRUCTION_ENV_UTIL_HPP
 
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace tdr {
 
 inline std::string_view get_env(const char *key) {
     if (key == nullptr) {
-        throw std::invalid_argument(
-            "Null pointer passed as environment variable name");
+        spdlog::error("Null pointer passed as environment variable name");
+        return std::string_view{};
     }
     if (*key == '\0') {
-        throw std::invalid_argument(
+        spdlog::error(
             "Value requested for the empty-name environment variable");
+        return std::string_view{};
     }
     const char *ev_val = getenv(key);
 
     if (ev_val == nullptr) {
+        spdlog::error("The environment variable {} is not set", key);
         return std::string_view{};
     }
 

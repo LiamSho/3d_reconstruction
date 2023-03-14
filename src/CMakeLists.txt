@@ -1,4 +1,5 @@
+add_executable(${PROJECT_NAME} main.cpp)
+
 add_subdirectory(utils)
 
-aux_source_directory(. DIR_MAIN_SRC)
-add_library(main ${DIR_MAIN_SRC})
+target_link_libraries(${PROJECT_NAME} INTERFACE utils)
