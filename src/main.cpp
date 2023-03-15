@@ -14,6 +14,7 @@
  * details.
  */
 
+#include "libs/reconstructor/reconstructor.hpp"
 #include "utils/env_util.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -52,6 +53,9 @@ int main(int argc, char **argv) {
 
     spdlog::info("Use bag file: {}", bag_file);
 
+    tdr::reconstructor rc(bag_file);
+    rc.run();
+
     return 0;
 }
 
@@ -83,12 +87,18 @@ int logger_init() {
 
 void lib_init() {
     spdlog::info("============[LIB VERSIONS]=============");
-    spdlog::info("spdlog: {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR,
+    spdlog::info("spdlog: {}.{}.{}",
+                 SPDLOG_VER_MAJOR,
+                 SPDLOG_VER_MINOR,
                  SPDLOG_VER_PATCH);
-    spdlog::info("pcl: {}.{}.{}", PCL_MAJOR_VERSION, PCL_MINOR_VERSION,
+    spdlog::info("pcl: {}.{}.{}",
+                 PCL_MAJOR_VERSION,
+                 PCL_MINOR_VERSION,
                  PCL_REVISION_VERSION);
     spdlog::info("librealsense: {}", RS2_API_VERSION_STR);
-    spdlog::info("glfw: {}.{}.{}", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR,
+    spdlog::info("glfw: {}.{}.{}",
+                 GLFW_VERSION_MAJOR,
+                 GLFW_VERSION_MINOR,
                  GLFW_VERSION_REVISION);
     spdlog::info("=======================================");
 }

@@ -1,6 +1,7 @@
 # IDE
 .idea
 !.idea/scopes/*.xml
+.vscode
 
 # System
 .DS_Store

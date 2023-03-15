@@ -14,20 +14,20 @@ elseif (MSVC)
     add_compile_options(/W4 /WX)
 endif ()
 
-find_package(realsense2 REQUIRED)
-find_package(PCL REQUIRED)
+find_package(realsense2 CONFIG REQUIRED)
+find_package(PCL 1.13 REQUIRED COMPONENTS common io)
 find_package(glfw3 CONFIG REQUIRED)
-find_package(spdlog REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-set(LIB_SPDLOG spdlog::spdlog_header_only)
-set(LIB_PCL ${PCL_LIBRARIES})
-set(LIB_GLFW glfw)
-set(LIB_RS ${realsense2_LIBRARY})
-
-link_libraries(${LIB_SPDLOG} ${LIB_PCL} ${LIB_GLFW} ${LIB_RS})
+link_libraries(
+        ${realsense2_LIBRARY}
+        ${PCL_LIBRARIES}
+        spdlog::spdlog_header_only
+        glfw
+)
 
 add_subdirectory(src)
