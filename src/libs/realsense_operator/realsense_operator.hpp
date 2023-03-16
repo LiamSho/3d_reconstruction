@@ -17,8 +17,9 @@
 #ifndef INC_3D_RECONSTRUCTION_REALSENSE_OPERATOR_HPP
 #define INC_3D_RECONSTRUCTION_REALSENSE_OPERATOR_HPP
 
+#include "../../utils/pcl_type_definition.hpp"
+#include <functional>
 #include <librealsense2/rs.hpp>
-#include <spdlog/spdlog.h>
 #include <string_view>
 
 namespace tdr {
@@ -26,14 +27,26 @@ namespace tdr {
 class realsense_operator {
   private:
     std::string_view bag_file_path;
+
     rs2::pipeline pipeline;
     rs2::config config;
     rs2::pointcloud pc;
+
+    std::string_view splitFileSavePath = {"rs_split"};
+    bool saveSplitFiles = true;
+    int captureInterval = 30;
+    int captureCount = 30;
 
   public:
     explicit realsense_operator(std::string_view bag_file_path);
 
     void split_pointclouds();
+    void split_pointclouds(const std::function<void(pcl_cloud)> &callback);
+
+    void setSplitFileSavePath(std::string_view v);
+    void setSaveSplitFiles(bool v);
+    void setCaptureInterval(int v);
+    void setCaptureCount(int v);
 };
 
 } // namespace tdr
