@@ -24,7 +24,7 @@
 #include "../../utils/pcl_type_definition.hpp"
 #include <pcl/point_cloud.h>
 #include <pcl/point_representation.h>
-#include <vector>
+#include <pcl/visualization/pcl_visualizer.h>
 
 namespace tdr {
 
@@ -39,11 +39,15 @@ class AlignerPointRepresentation
 
 class pointcloud_aligner {
   private:
+    const std::string_view file_save_directory{"icp_align"};
+
     std::vector<pcl_cloud> clouds;
     Eigen::Matrix4f global_transform;
 
     bool save_every_aligned_pair = false;
     bool visualization = false;
+    size_t iteration_count = 30;
+    int k_search = 30;
 
     pcl::visualization::PCLVisualizer *visualizer;
     int v_vp_1 = 1;
@@ -61,8 +65,10 @@ class pointcloud_aligner {
     explicit pointcloud_aligner(std::vector<pcl_cloud> v_clouds);
     void align();
 
-    void setSaveEveryAlignedPair(bool v = false);
-    void setVisualization(bool v = false);
+    void setSaveEveryAlignedPair(bool b);
+    void setVisualization(bool v);
+    void setIterationCount(size_t v);
+    void setKSearch(int v);
 
     Eigen::Matrix4f get_global_transform();
 };

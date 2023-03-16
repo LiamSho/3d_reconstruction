@@ -20,16 +20,16 @@
 
 #include "pointcloud_aligner.hpp"
 
-#include <pcl/features/normal_3d.h>
+#include "../../utils/fs_utils.hpp"
+#include <pcl/features/normal_3d_omp.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp_nl.h>
 #include <pcl/registration/transforms.h>
-#include <pcl/visualization/pcl_visualizer.h>
 #include <spdlog/spdlog.h>
 #include <utility>
+#include <vector>
 
 tdr::AlignerPointRepresentation::AlignerPointRepresentation() {
     this->nr_dimensions_ = 4;
@@ -77,15 +77,19 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
         new pcl::search::KdTree<pcl::PointXYZ>);
 
     norm_set.setSearchMethod(tree);
-    norm_set.setKSearch(30);
+    norm_set.setKSearch(this->k_search);
 
+    spdlog::info("Computing surface normals and curvature for source");
     norm_set.setInputCloud(src);
     norm_set.compute(*points_with_normals_src);
     pcl::copyPointCloud(*src, *points_with_normals_src);
 
+    spdlog::info("Computing surface normals and curvature for target");
     norm_set.setInputCloud(tgt);
     norm_set.compute(*points_with_normals_tgt);
     pcl::copyPointCloud(*tgt, *points_with_normals_tgt);
+
+    spdlog::info("Surface normals and curvature compute done");
 
     // Point representation and weight
     AlignerPointRepresentation point_rep;
@@ -109,8 +113,8 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     pcl_cloud_normal reg_result = points_with_normals_src;
     reg.setMaximumIterations(2);
 
-    for (size_t i = 0; i < 30; ++i) {
-        spdlog::info("Iteration Nr.{}", i);
+    for (size_t i = 1; i <= this->iteration_count; ++i) {
+        spdlog::info("Iteration Nr.{} start", i);
 
         points_with_normals_src = reg_result;
 
@@ -129,6 +133,8 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
         }
 
         prev = reg.getLastIncrementalTransformation();
+
+        spdlog::info("Iteration Nr.{} end", i);
 
         if (this->visualization) {
             this->show_clouds_right(points_with_normals_tgt,
@@ -170,6 +176,9 @@ void tdr::pointcloud_aligner::align() {
     if (this->visualization) {
         clean_visualization();
     }
+    if (this->save_every_aligned_pair) {
+        tdr::utils::fs::ensure_directory_empty(this->file_save_directory);
+    }
 
     auto pc_count = this->clouds.size();
     if (pc_count < 2) {
@@ -206,7 +215,7 @@ void tdr::pointcloud_aligner::align() {
 
         if (this->save_every_aligned_pair) {
             std::stringstream ss;
-            ss << i << ".pcd";
+            ss << "icp_align/" << i << ".pcd";
             pcl::io::savePCDFile(ss.str(), *result, true);
         }
     }
@@ -218,6 +227,14 @@ void tdr::pointcloud_aligner::setSaveEveryAlignedPair(bool v) {
 
 void tdr::pointcloud_aligner::setVisualization(bool v) {
     this->visualization = v;
+}
+
+void tdr::pointcloud_aligner::setIterationCount(size_t v) {
+    this->iteration_count = v;
+}
+
+void tdr::pointcloud_aligner::setKSearch(int v) {
+    this->k_search = v;
 }
 
 Eigen::Matrix4f tdr::pointcloud_aligner::get_global_transform() {
@@ -241,6 +258,7 @@ void tdr::pointcloud_aligner::show_clouds_left(const pcl_cloud &pc_tgt,
     this->visualizer->addPointCloud(pc_tgt, tgt_h, "vp1_target", v_vp_1);
     this->visualizer->addPointCloud(pc_src, src_h, "vp1_source", v_vp_1);
 
+    spdlog::info("Update visualizer, press q to start the alignment");
     this->visualizer->spin();
 }
 
@@ -268,5 +286,6 @@ void tdr::pointcloud_aligner::show_clouds_right(
     this->visualizer->addPointCloud(
         pc_src, src_color_handler, "vp2_source", this->v_vp_2);
 
-    this->visualizer->spinOnce();
+    spdlog::info("Update visualizer, press q to continue the iteration");
+    this->visualizer->spin();
 }
