@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.21)
 project(3d_reconstruction CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -15,7 +15,7 @@ elseif (MSVC)
 endif ()
 
 find_package(realsense2 CONFIG REQUIRED)
-find_package(PCL 1.13 REQUIRED COMPONENTS common io)
+find_package(PCL 1.13 REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
