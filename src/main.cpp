@@ -14,8 +14,10 @@
  * details.
  */
 
+#include "libs/pointcloud_aligner/pointcloud_aligner.hpp"
 #include "libs/realsense_operator/realsense_operator.hpp"
 #include "utils/env_util.hpp"
+#include "utils/pcl_type_definition.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <librealsense2/rs.hpp>
@@ -23,6 +25,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 int logger_init();
 void lib_init();
@@ -53,8 +56,21 @@ int main(int argc, char **argv) {
 
     spdlog::info("Use bag file: {}", bag_file);
 
+    std::vector<pcl_cloud> clouds;
+
     tdr::realsense_operator rs_operator(bag_file);
-    rs_operator.split_pointclouds();
+    rs_operator.setSaveSplitFiles(true);
+    rs_operator.setCaptureCount(2);
+    rs_operator.setCaptureInterval(30);
+    rs_operator.split_pointclouds(
+        [&](const pcl_cloud &c) { clouds.push_back(c); });
+
+    tdr::pointcloud_aligner aligner(clouds);
+    aligner.setKSearch(30);
+    aligner.setIterationCount(5);
+    aligner.setVisualization(true);
+    aligner.setSaveEveryAlignedPair(true);
+    aligner.align();
 
     return 0;
 }
