@@ -14,7 +14,7 @@
  * details.
  */
 
-#include "libs/reconstructor/reconstructor.hpp"
+#include "libs/realsense_operator/realsense_operator.hpp"
 #include "utils/env_util.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
         bag_file = argv[1];
     } else {
         spdlog::debug("Use bag file parsed from environment variable");
-        bag_file = tdr::get_env("TDR_BAG_FILE_PATH");
+        bag_file = tdr::utils::get_env("TDR_BAG_FILE_PATH");
     }
 
     if (bag_file.empty()) {
@@ -53,8 +53,8 @@ int main(int argc, char **argv) {
 
     spdlog::info("Use bag file: {}", bag_file);
 
-    tdr::reconstructor rc(bag_file);
-    rc.run();
+    tdr::realsense_operator rs_operator(bag_file);
+    rs_operator.split_pointclouds();
 
     return 0;
 }

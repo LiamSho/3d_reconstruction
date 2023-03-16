@@ -14,22 +14,27 @@
  * details.
  */
 
-#ifndef INC_3D_RECONSTRUCTION_RECONSTRUCTOR_HPP
-#define INC_3D_RECONSTRUCTION_RECONSTRUCTOR_HPP
+#ifndef INC_3D_RECONSTRUCTION_REALSENSE_OPERATOR_HPP
+#define INC_3D_RECONSTRUCTION_REALSENSE_OPERATOR_HPP
 
+#include <librealsense2/rs.hpp>
 #include <spdlog/spdlog.h>
 #include <string_view>
 
 namespace tdr {
 
-class reconstructor {
+class realsense_operator {
   private:
     std::string_view bag_file_path;
+    rs2::pipeline pipeline;
+    rs2::config config;
+    rs2::pointcloud pc;
 
   public:
-    explicit reconstructor(std::string_view bag_file_path);
-    void run();
+    explicit realsense_operator(std::string_view bag_file_path);
+
+    void split_pointclouds();
 };
 
 } // namespace tdr
-#endif // INC_3D_RECONSTRUCTION_RECONSTRUCTOR_HPP
+#endif // INC_3D_RECONSTRUCTION_REALSENSE_OPERATOR_HPP

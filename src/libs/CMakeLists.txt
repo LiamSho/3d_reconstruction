@@ -1,7 +1,10 @@
-set(TDR_LIBS reconstructor)
+set(TDR_LIBS
+        realsense_operator
+        pointcloud_aligner)
 
 add_library(tdr INTERFACE)
 
-add_subdirectory(${TDR_LIBS})
-
-target_link_libraries(tdr INTERFACE ${TDR_LIBS})
+foreach (TDR_LIB ${TDR_LIBS})
+    add_subdirectory(${TDR_LIB})
+    target_link_libraries(tdr INTERFACE ${TDR_LIB})
+endforeach ()
