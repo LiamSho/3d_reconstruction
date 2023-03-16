@@ -20,7 +20,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
-namespace tdr {
+namespace tdr::utils {
 
 inline std::string_view get_env(const char *key) {
     if (key == nullptr) {
@@ -42,6 +42,6 @@ inline std::string_view get_env(const char *key) {
     return std::string_view{ev_val};
 }
 
-} // namespace tdr
+} // namespace tdr::utils
 
 #endif // INC_3D_RECONSTRUCTION_ENV_UTIL_HPP

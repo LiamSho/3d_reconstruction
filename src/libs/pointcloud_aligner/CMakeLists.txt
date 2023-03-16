@@ -1,4 +1,4 @@
-set(LIB_NAME reconstructor)
+set(LIB_NAME pointcloud_aligner)
 
 add_library(${LIB_NAME})
 

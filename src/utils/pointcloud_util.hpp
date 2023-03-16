@@ -17,13 +17,12 @@
 #ifndef INC_3D_RECONSTRUCTION_POINTCLOUD_UTIL_HPP
 #define INC_3D_RECONSTRUCTION_POINTCLOUD_UTIL_HPP
 
+#include "pcl_type_definition.hpp"
 #include <librealsense2/rs.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-using pcl_cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr;
-
-namespace tdr {
+namespace tdr::utils::points {
 
 pcl_cloud rs2_points_to_pcl(const rs2::points &points) {
     pcl_cloud cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -37,14 +36,14 @@ pcl_cloud rs2_points_to_pcl(const rs2::points &points) {
     auto ptr = points.get_vertices();
     for (auto &p : cloud->points) {
         p.x = ptr->x;
-        p.y = ptr->y;
+        p.y = -ptr->y;
         p.z = ptr->z;
         ptr++;
     }
-    
+
     return cloud;
 }
 
-} // namespace tdr
+} // namespace tdr::utils::points
 
 #endif // INC_3D_RECONSTRUCTION_POINTCLOUD_UTIL_HPP
