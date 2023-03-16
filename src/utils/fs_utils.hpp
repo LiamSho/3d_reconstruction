@@ -29,7 +29,7 @@ namespace tdr::utils::fs {
 
 namespace stdfs = std::filesystem;
 
-void create_directory_if_not_exist(std::string_view directory_path) {
+inline void create_directory_if_not_exist(std::string_view directory_path) {
 
     if (stdfs::exists(directory_path)) {
         return;
@@ -38,7 +38,7 @@ void create_directory_if_not_exist(std::string_view directory_path) {
     stdfs::create_directory(directory_path);
 }
 
-void ensure_directory_empty(std::string_view directory_path) {
+inline void ensure_directory_empty(std::string_view directory_path) {
 
     if (stdfs::exists(directory_path)) {
         stdfs::remove_all(directory_path);
@@ -47,7 +47,7 @@ void ensure_directory_empty(std::string_view directory_path) {
     stdfs::create_directory(directory_path);
 }
 
-void get_directory_content(std::string_view directory_path) {
+inline void get_directory_content(std::string_view directory_path) {
 
     stdfs::directory_iterator iterator(directory_path);
     std::vector<const stdfs::path> files;

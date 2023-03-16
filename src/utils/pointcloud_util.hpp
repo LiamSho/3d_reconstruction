@@ -24,7 +24,7 @@
 
 namespace tdr::utils::points {
 
-pcl_cloud rs2_points_to_pcl(const rs2::points &points) {
+inline pcl_cloud rs2_points_to_pcl(const rs2::points &points) {
     pcl_cloud cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
     auto sp = points.get_profile().as<rs2::video_stream_profile>();
