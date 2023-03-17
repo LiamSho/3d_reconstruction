@@ -47,14 +47,17 @@ inline void ensure_directory_empty(std::string_view directory_path) {
     stdfs::create_directory(directory_path);
 }
 
-inline void get_directory_content(std::string_view directory_path) {
+inline std::vector<stdfs::path>
+get_directory_content(std::string_view directory_path) {
 
     stdfs::directory_iterator iterator(directory_path);
-    std::vector<const stdfs::path> files;
+    std::vector<stdfs::path> files;
 
     for (auto const &dir_entry : iterator) {
         files.push_back(dir_entry.path());
     }
+
+    return files;
 }
 
 } // namespace tdr::utils::fs
