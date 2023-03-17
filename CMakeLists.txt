@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.21)
-project(3d_reconstruction CXX)
+project(3d_reconstruction)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+
+enable_language(C)
+enable_language(CXX)
 
 message("-- Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
@@ -15,7 +18,7 @@ elseif (MSVC)
 endif ()
 
 find_package(realsense2 CONFIG REQUIRED)
-find_package(PCL 1.13 REQUIRED)
+find_package(PCL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
