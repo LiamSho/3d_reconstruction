@@ -37,6 +37,14 @@ class realsense_operator {
     int captureInterval = 30;
     int captureCount = 30;
 
+    bool runPassthroughFilter = false;
+    float passthroughFilterXMin = 0.0f;
+    float passthroughFilterXMax = 0.0f;
+    float passthroughFilterYMin = 0.0f;
+    float passthroughFilterYMax = 0.0f;
+    float passthroughFilterZMin = 0.0f;
+    float passthroughFilterZMax = 0.0f;
+
   public:
     explicit realsense_operator(std::string_view bag_file_path);
 
@@ -47,6 +55,10 @@ class realsense_operator {
     void setSaveSplitFiles(bool v);
     void setCaptureInterval(int v);
     void setCaptureCount(int v);
+    void setRunPassthroughFilter(bool v);
+    void setPassthroughFilterX(float min, float max);
+    void setPassthroughFilterY(float min, float max);
+    void setPassthroughFilterZ(float min, float max);
 };
 
 } // namespace tdr

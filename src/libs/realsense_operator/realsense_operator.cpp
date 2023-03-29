@@ -18,8 +18,13 @@
 
 #include "../../utils/fs_utils.hpp"
 #include "../../utils/pointcloud_util.hpp"
-#include <pcl/io/pcd_io.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/io/ply_io.h>
 #include <spdlog/spdlog.h>
+
+float deg2rad(float deg);
+pcl_cloud run_filter(const pcl_cloud &src, std::string_view fn, float min,
+                     float max);
 
 tdr::realsense_operator::realsense_operator(::std::string_view bag_file_path) {
     this->bag_file_path = bag_file_path;
@@ -65,16 +70,36 @@ void tdr::realsense_operator::split_pointclouds(
 
                 auto pcl_points = tdr::utils::points::rs2_points_to_pcl(points);
 
+                // Filter
+                if (this->runPassthroughFilter) {
+                    spdlog::info("Running passthrough filter...");
+                    pcl_points = run_filter(pcl_points,
+                                            "x",
+                                            this->passthroughFilterXMin,
+                                            this->passthroughFilterXMax);
+                    pcl_points = run_filter(pcl_points,
+                                            "y",
+                                            this->passthroughFilterYMin,
+                                            this->passthroughFilterYMax);
+                    pcl_points = run_filter(pcl_points,
+                                            "z",
+                                            this->passthroughFilterZMin,
+                                            this->passthroughFilterZMax);
+                    spdlog::info("Filter done.");
+                }
+
+                // Save
                 if (this->saveSplitFiles) {
                     std::stringstream fn;
                     fn << this->splitFileSavePath << "/" << current_split_count
-                       << ".pcd";
+                       << ".ply";
                     spdlog::info("Saving split {} to {}...",
                                  current_split_count,
                                  fn.str());
-                    pcl::io::savePCDFile(fn.str(), *pcl_points, true);
+                    pcl::io::savePLYFile(fn.str(), *pcl_points, true);
                 }
 
+                // Callback
                 if (callback != nullptr) {
                     callback(pcl_points);
                 }
@@ -110,4 +135,41 @@ void tdr::realsense_operator::setCaptureInterval(int v) {
 
 void tdr::realsense_operator::setCaptureCount(int v) {
     this->captureCount = v;
+}
+
+void tdr::realsense_operator::setRunPassthroughFilter(bool v) {
+    this->runPassthroughFilter = v;
+}
+
+void tdr::realsense_operator::setPassthroughFilterX(float min, float max) {
+    this->passthroughFilterXMin = min;
+    this->passthroughFilterXMax = max;
+}
+
+void tdr::realsense_operator::setPassthroughFilterY(float min, float max) {
+    this->passthroughFilterYMin = min;
+    this->passthroughFilterYMax = max;
+}
+
+void tdr::realsense_operator::setPassthroughFilterZ(float min, float max) {
+    this->passthroughFilterZMin = min;
+    this->passthroughFilterZMax = max;
+}
+
+pcl_cloud run_filter(const pcl_cloud &src, std::string_view fn, float min,
+                     float max) {
+
+    spdlog::info("Running passthrough filter for {}, min: {}, max: {}",
+                 fn.data(),
+                 min,
+                 max);
+
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pcl_cloud filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pass.setInputCloud(src);
+    pass.setFilterFieldName(fn.data());
+    pass.setFilterLimits(min, max);
+    pass.filter(*filtered_cloud);
+
+    return filtered_cloud;
 }

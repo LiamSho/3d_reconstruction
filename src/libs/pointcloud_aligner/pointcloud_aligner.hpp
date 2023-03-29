@@ -14,10 +14,6 @@
  * details.
  */
 
-//
-// Created by Liam Sho on 2023/3/15.
-//
-
 #ifndef INC_3D_RECONSTRUCTION_POINTCLOUD_ALIGNER_HPP
 #define INC_3D_RECONSTRUCTION_POINTCLOUD_ALIGNER_HPP
 
@@ -44,8 +40,9 @@ class pointcloud_aligner {
     std::vector<pcl_cloud> clouds;
     Eigen::Matrix4f global_transform;
 
+    bool visualization = true;
     bool save_every_aligned_pair = false;
-    bool visualization = false;
+    bool visualization_per_iteration = false;
     size_t iteration_count = 30;
     int k_search = 30;
 
@@ -66,9 +63,11 @@ class pointcloud_aligner {
     void align();
 
     void setSaveEveryAlignedPair(bool b);
-    void setVisualization(bool v);
+    void setVisualizationPerIteration(bool v);
     void setIterationCount(size_t v);
     void setKSearch(int v);
+
+    void setVisualization(bool v);
 
     Eigen::Matrix4f get_global_transform();
 };

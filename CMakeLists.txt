@@ -17,6 +17,8 @@ elseif (MSVC)
     add_compile_options(/W4 /WX)
 endif ()
 
+include_directories(./include)
+
 find_package(realsense2 CONFIG REQUIRED)
 find_package(PCL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)

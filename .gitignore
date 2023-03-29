@@ -11,3 +11,6 @@ Desktop.ini
 # CMake and Vcpkg
 cmake-build-*
 vcpkg_installed
+
+# Dev Config
+*.dev.json
