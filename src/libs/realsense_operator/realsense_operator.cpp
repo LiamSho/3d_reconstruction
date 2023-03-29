@@ -19,7 +19,7 @@
 #include "../../utils/fs_utils.hpp"
 #include "../../utils/pointcloud_util.hpp"
 #include <pcl/filters/passthrough.h>
-#include <pcl/io/ply_io.h>
+#include <pcl/io/pcd_io.h>
 #include <spdlog/spdlog.h>
 
 pcl_cloud run_filter(const pcl_cloud &src, std::string_view fn, float min,
@@ -92,11 +92,11 @@ void tdr::realsense_operator::split_pointclouds(
                 if (this->saveSplitFiles) {
                     std::stringstream fn;
                     fn << this->splitFileSavePath << "/"
-                       << fmt::format("{:0>3}", current_split_count) << ".ply";
+                       << fmt::format("{:0>3}", current_split_count) << ".pcd";
                     spdlog::info("Saving split {:0>3} to {}...",
                                  current_split_count,
                                  fn.str());
-                    pcl::io::savePLYFile(fn.str(), *pcl_points, true);
+                    pcl::io::savePCDFile(fn.str(), *pcl_points, true);
                 }
 
                 // Callback

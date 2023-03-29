@@ -19,7 +19,7 @@
 #include "../../utils/fs_utils.hpp"
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/io/ply_io.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp_nl.h>
 #include <pcl/registration/transforms.h>
@@ -231,8 +231,8 @@ void tdr::pointcloud_aligner::align() {
 
         if (this->save_every_aligned_pair) {
             std::stringstream ss;
-            ss << "icp_align/" << fmt::format("{:0>3}", i) << ".ply";
-            pcl::io::savePLYFile(ss.str(), *result, true);
+            ss << "icp_align/" << fmt::format("{:0>3}", i) << ".pcd";
+            pcl::io::savePCDFile(ss.str(), *result, true);
 
             ss.str("");
             ss << "icp_align/" << fmt::format("{:0>3}", i) << "_transform.txt";
