@@ -114,7 +114,7 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     Eigen::Matrix4f prev = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f target_to_source = Eigen::Matrix4f::Identity();
     pcl_cloud_normal reg_result = points_with_normals_src;
-    reg.setMaximumIterations(2);
+    reg.setMaximumIterations(500);
 
     for (size_t i = 1; i <= this->iteration_count; ++i) {
 
