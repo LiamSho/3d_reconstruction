@@ -57,7 +57,8 @@ class pointcloud_aligner {
 
   public:
     void pair_align(const pcl_cloud &pc_src, const pcl_cloud &pc_tgt,
-                    const pcl_cloud &output, Eigen::Matrix4f &final_transform);
+                    const pcl_cloud &output, Eigen::Matrix4f &final_transform,
+                    size_t align_count);
 
     explicit pointcloud_aligner(std::vector<pcl_cloud> v_clouds);
     void align();

@@ -22,7 +22,6 @@
 #include <pcl/io/ply_io.h>
 #include <spdlog/spdlog.h>
 
-float deg2rad(float deg);
 pcl_cloud run_filter(const pcl_cloud &src, std::string_view fn, float min,
                      float max);
 
@@ -59,11 +58,12 @@ void tdr::realsense_operator::split_pointclouds(
 
         if (has_frame) {
 
-            spdlog::debug(
-                "Split {}, Frame: {}", current_split_count, current_frame);
+            spdlog::debug("Split {:0>3}, Frame: {:0>2}",
+                          current_split_count,
+                          current_frame);
 
             if (current_frame == 1) {
-                spdlog::info("Capture split {}...", current_split_count);
+                spdlog::info("Capture split {:0>3}...", current_split_count);
 
                 auto depth = frame.get_depth_frame();
                 auto points = this->pc.calculate(depth);
@@ -91,9 +91,9 @@ void tdr::realsense_operator::split_pointclouds(
                 // Save
                 if (this->saveSplitFiles) {
                     std::stringstream fn;
-                    fn << this->splitFileSavePath << "/" << current_split_count
-                       << ".ply";
-                    spdlog::info("Saving split {} to {}...",
+                    fn << this->splitFileSavePath << "/"
+                       << fmt::format("{:0>3}", current_split_count) << ".ply";
+                    spdlog::info("Saving split {:0>3} to {}...",
                                  current_split_count,
                                  fn.str());
                     pcl::io::savePLYFile(fn.str(), *pcl_points, true);
@@ -159,10 +159,10 @@ void tdr::realsense_operator::setPassthroughFilterZ(float min, float max) {
 pcl_cloud run_filter(const pcl_cloud &src, std::string_view fn, float min,
                      float max) {
 
-    spdlog::info("Running passthrough filter for {}, min: {}, max: {}",
-                 fn.data(),
-                 min,
-                 max);
+    spdlog::debug("Running passthrough filter for {}, min: {}, max: {}",
+                  fn.data(),
+                  min,
+                  max);
 
     pcl::PassThrough<pcl::PointXYZ> pass;
     pcl_cloud filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);

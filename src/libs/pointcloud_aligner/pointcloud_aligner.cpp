@@ -60,7 +60,8 @@ tdr::pointcloud_aligner::pointcloud_aligner(std::vector<pcl_cloud> v_clouds) {
 void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
                                          const pcl_cloud &pc_tgt,
                                          const pcl_cloud &output,
-                                         Eigen::Matrix4f &final_transform) {
+                                         Eigen::Matrix4f &final_transform,
+                                         size_t align_count = -1) {
 
     pcl_cloud src(new pcl::PointCloud<pcl::PointXYZ>);
     pcl_cloud tgt(new pcl::PointCloud<pcl::PointXYZ>);
@@ -116,7 +117,13 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     reg.setMaximumIterations(2);
 
     for (size_t i = 1; i <= this->iteration_count; ++i) {
-        spdlog::info("Iteration Nr.{} start", i);
+
+        if (align_count >= 0) {
+            spdlog::info(
+                "Align count {:0>3}, Iteration Nr.{:0>3}", align_count, i);
+        } else {
+            spdlog::info("Iteration Nr.{:0>3}", i);
+        }
 
         points_with_normals_src = reg_result;
 
@@ -135,8 +142,6 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
         }
 
         prev = reg.getLastIncrementalTransformation();
-
-        spdlog::info("Iteration Nr.{} end", i);
 
         if (this->visualization_per_iteration) {
             this->show_clouds_right(points_with_normals_tgt,
@@ -174,6 +179,12 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
 
     *output += *pc_src;
     final_transform = target_to_source;
+
+    if (align_count >= 0) {
+        spdlog::info("Align count {:0>3} done", align_count);
+    } else {
+        spdlog::info("Pair align done");
+    }
 }
 
 void tdr::pointcloud_aligner::align() {
@@ -197,7 +208,7 @@ void tdr::pointcloud_aligner::align() {
 
     for (size_t i = 1; i < pc_count; ++i) {
 
-        spdlog::info("Align: No.{} to No.{}", i - 1, i);
+        spdlog::info("Align: No.{:0>3} to No.{:0>3}", i - 1, i);
         source = this->clouds[i - 1];
         target = this->clouds[i];
 
@@ -205,7 +216,7 @@ void tdr::pointcloud_aligner::align() {
 
         pcl_cloud temp(new pcl::PointCloud<pcl::PointXYZ>);
 
-        pair_align(source, target, temp, pair_transform);
+        pair_align(source, target, temp, pair_transform, i);
 
         pcl::transformPointCloud(*temp, *result, this->global_transform);
 
@@ -220,11 +231,11 @@ void tdr::pointcloud_aligner::align() {
 
         if (this->save_every_aligned_pair) {
             std::stringstream ss;
-            ss << "icp_align/" << i << ".ply";
+            ss << "icp_align/" << fmt::format("{:0>3}", i) << ".ply";
             pcl::io::savePLYFile(ss.str(), *result, true);
 
             ss.str("");
-            ss << "icp_align/" << i << "_transform.txt";
+            ss << "icp_align/" << fmt::format("{:0>3}", i) << "_transform.txt";
             std::ofstream ofs(ss.str());
             ofs << "Pair transform: \n" << pair_transform.array() << std::endl;
             ofs << "Global transform: \n"
