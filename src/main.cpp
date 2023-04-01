@@ -14,6 +14,7 @@
  * details.
  */
 
+#include "../include/lyra.hpp"
 #include "../include/meojson.hpp"
 #include "libs/pointcloud_aligner/pointcloud_aligner.hpp"
 #include "libs/realsense_operator/realsense_operator.hpp"
@@ -28,124 +29,261 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
-struct configuration {
-    std::string bag_file_path;
-
-    // Realsense operator
-    int capture_count{};
-    int capture_interval{};
-    bool save_split_files{};
-
-    bool run_filter{};
-    float filter_x_min{};
-    float filter_x_max{};
-    float filter_y_min{};
-    float filter_y_max{};
-    float filter_z_min{};
-    float filter_z_max{};
-
-    // Pointcloud aligner
-    int k_search{};
-    int iteration_count{};
-    bool visualization{};
-    bool visualization_per_iteration{};
-    bool save_every_aligned_pair{};
+struct init_configuration {
+    std::string log_file_path = "log.txt";
+    bool debug_level = false;
+    bool verbose_level = false;
 };
 
-int logger_init();
-void lib_init();
-std::optional<configuration> parse_config(std::string_view config_file_path);
+int init(const init_configuration &config);
+
+void build_cli(lyra::cli &cli, const std::string &command,
+               const std::string &help_message, bool *show_help,
+               init_configuration *init_config,
+               const std::function<void(lyra::command &)> &builder,
+               const std::function<void(const lyra::group &)> &run);
+
+struct realsense_operator_command {
+    tdr::realsense_operator_configuration config;
+    bool show_help = false;
+
+    init_configuration init_config;
+
+    explicit realsense_operator_command(lyra::cli &cli) {
+        build_cli(
+            cli,
+            "realsense-operator",
+            "Run realsense operator module",
+            &show_help,
+            &init_config,
+            [this](lyra::command &c) {
+                c.add_argument(
+                     lyra::opt(config.bag_file_path, "file path")
+                         .required()
+                         .name("-s")
+                         .name("--source")
+                         .help(
+                             "The path of RealSense record file, end in .bag"))
+                    .add_argument(
+                        lyra::opt(config.split_file_save_path, "directory")
+                            .optional()
+                            .name("-o")
+                            .name("--save-dir")
+                            .help("The directory to save the result, "
+                                  "default to \"rs_split\""))
+                    .add_argument(
+                        lyra::opt(config.capture_interval, "interval")
+                            .optional()
+                            .name("-i")
+                            .name("--interval")
+                            .help("The frames interval to capture, every first "
+                                  "frame in the interval will be captured, "
+                                  "default to 30"))
+                    .add_argument(lyra::opt(config.capture_count, "count")
+                                      .optional()
+                                      .name("-c")
+                                      .name("--count")
+                                      .help("Total frames to capture"))
+                    .add_argument(
+                        lyra::opt(config.run_passthrough_filter)
+                            .optional()
+                            .name("-p")
+                            .name("--passthrough-filter")
+                            .help(
+                                "Run passthrough filter with provided limits"))
+                    .add_argument(
+                        lyra::opt(config.passthrough_filter_x_min, "min")
+                            .optional()
+                            .name("-x")
+                            .name("--x-min")
+                            .help("Set the minimum x value for passthrough "
+                                  "filter, default to -0.5"))
+                    .add_argument(
+                        lyra::opt(config.passthrough_filter_x_max, "max")
+                            .optional()
+                            .name("-X")
+                            .name("--x-max")
+                            .help("Set the maximum x value for passthrough "
+                                  "filter, default to 0.5"))
+                    .add_argument(
+                        lyra::opt(config.passthrough_filter_x_min, "min")
+                            .optional()
+                            .name("-y")
+                            .name("--y-min")
+                            .help("Set the minimum y value for passthrough "
+                                  "filter, default to -0.5"))
+                    .add_argument(
+                        lyra::opt(config.passthrough_filter_x_max, "max")
+                            .optional()
+                            .name("-Y")
+                            .name("--y-max")
+                            .help("Set the maximum y value for passthrough "
+                                  "filter, default to 0.5"))
+                    .add_argument(
+                        lyra::opt(config.passthrough_filter_x_min, "min")
+                            .optional()
+                            .name("-z")
+                            .name("--z-min")
+                            .help("Set the minimum z value for passthrough "
+                                  "filter, default to -0.5"))
+                    .add_argument(
+                        lyra::opt(config.passthrough_filter_x_max, "max")
+                            .optional()
+                            .name("-Z")
+                            .name("--z-max")
+                            .help("Set the maximum z value for passthrough "
+                                  "filter, default to 0.5"));
+            },
+            [this](const lyra::group &g) { run(g); });
+    }
+
+    void run(const lyra::group &g) const {
+        if (show_help) {
+            std::cout << g;
+            return;
+        }
+
+        auto init_result = init(init_config);
+        if (init_result != 0) {
+            return;
+        }
+
+        tdr::realsense_operator rs_operator(config);
+        rs_operator.split_pointclouds();
+
+        spdlog::info("Realsense operator module finished");
+    }
+};
+
+struct pointcloud_aligner_command {
+    tdr::pointcloud_aligner_configuration config;
+    bool show_help = false;
+
+    init_configuration init_config;
+
+    explicit pointcloud_aligner_command(lyra::cli &cli) {
+        build_cli(
+            cli,
+            "pointcloud-aligner",
+            "Run pointcloud aligner module",
+            &show_help,
+            &init_config,
+            [this](lyra::command &c) {
+                c.add_argument(
+                     lyra::opt(config.file_save_directory, "directory")
+                         .optional()
+                         .name("-o")
+                         .name("--save-dir")
+                         .help("The directory to save the result, "
+                               "default to \"icp_align\""))
+                    .add_argument(
+                        lyra::opt(config.source_files_directory, "directory")
+                            .optional()
+                            .name("-s")
+                            .name("--source-dir")
+                            .help("The directory where source pcd files are "
+                                  "saved, "
+                                  "default to \"source\""))
+                    .add_argument(lyra::opt(config.visualization)
+                                      .optional()
+                                      .name("-z")
+                                      .name("--visualization")
+                                      .help("Enable visualization"))
+                    .add_argument(
+                        lyra::opt(config.visualization_per_iteration)
+                            .optional()
+                            .name("-p")
+                            .name("--visualization-per-iteration")
+                            .help("Pause and visualize every iteration"))
+                    .add_argument(
+                        lyra::opt(config.iteration_count, "count")
+                            .optional()
+                            .name("-i")
+                            .name("iteration")
+                            .help("Set the iteration count, default to 30"))
+                    .add_argument(
+                        lyra::opt(config.k_search, "depth")
+                            .optional()
+                            .name("-k")
+                            .name("--k-search")
+                            .help(
+                                "Set the depth of the kd-tree, default is 30"));
+            },
+            [this](const lyra::group &g) { run(g); });
+    }
+
+    void run(const lyra::group &g) const {
+        if (show_help) {
+            std::cout << g;
+            return;
+        }
+
+        auto init_result = init(init_config);
+        if (init_result != 0) {
+            return;
+        }
+
+        tdr::pointcloud_aligner aligner(config);
+        aligner.align();
+
+        spdlog::info("Pointcloud aligner module finished");
+
+        std::stringstream ss;
+        ss << aligner.get_global_transform().array();
+        spdlog::info("Global transform: \n{}", ss.str());
+    }
+};
 
 int main(int argc, char **argv) {
-    auto logger_init_result = logger_init();
-    if (logger_init_result != 0) {
-        return -1;
+    auto cli = lyra::cli();
+    std::string command;
+    bool show_help = false;
+    cli.add_argument(lyra::help(show_help).description("Show help message"));
+    [[maybe_unused]] pointcloud_aligner_command pointcloudAlignerCommand{cli};
+    [[maybe_unused]] realsense_operator_command realsenseOperatorCommand{cli};
+    auto result = cli.parse({argc, argv});
+
+    if (show_help) {
+        std::cout << cli;
+        return 0;
     }
-
-    spdlog::info("Starting 3d_reconstruction");
-    lib_init();
-
-    // Get the configuration file path
-    std::string_view config_file;
-    if (argc == 2) {
-        spdlog::debug("Use config file parsed from command line");
-        config_file = argv[1];
-    } else {
-        spdlog::debug("Use config file parsed from environment variable");
-        config_file = tdr::utils::get_env("TDR_CONFIG_FILE_PATH");
+    if (!result) {
+        std::cerr << result.message() << "\n";
     }
-
-    if (config_file.empty()) {
-        spdlog::error("Failed to get config file path");
-        return -2;
-    }
-
-    // parse the configuration file
-    auto config = parse_config(config_file);
-    if (!config) {
-        spdlog::error("Failed to parse config file");
-        return -2;
-    }
-
-    std::vector<pcl_cloud> clouds;
-
-    tdr::realsense_operator rs_operator(config->bag_file_path);
-    rs_operator.setSaveSplitFiles(config->save_split_files);
-    rs_operator.setCaptureCount(config->capture_count);
-    rs_operator.setCaptureInterval(config->capture_interval);
-    rs_operator.setRunPassthroughFilter(config->run_filter);
-    rs_operator.setPassthroughFilterX(config->filter_x_min,
-                                      config->filter_x_max);
-    rs_operator.setPassthroughFilterY(config->filter_y_min,
-                                      config->filter_y_max);
-    rs_operator.setPassthroughFilterZ(config->filter_z_min,
-                                      config->filter_z_max);
-    rs_operator.split_pointclouds(
-        [&](const pcl_cloud &c) { clouds.push_back(c); });
-
-    tdr::pointcloud_aligner aligner(clouds);
-    aligner.setKSearch(config->k_search);
-    aligner.setIterationCount(config->iteration_count);
-    aligner.setVisualization(config->visualization);
-    aligner.setVisualizationPerIteration(config->visualization_per_iteration);
-    aligner.setSaveEveryAlignedPair(config->save_every_aligned_pair);
-    aligner.align();
-
-    std::stringstream logStream;
-    logStream << "Final global transformation matrix: " << std::endl
-              << aligner.get_global_transform().array() << std::endl;
-    spdlog::info(logStream.str());
-
-    return 0;
+    return result ? 0 : 1;
 }
 
-int logger_init() {
+int init(const init_configuration &config) {
+    spdlog::level::level_enum level = spdlog::level::info;
+    if (config.debug_level) {
+        level = spdlog::level::debug;
+    }
+    if (config.verbose_level) {
+        level = spdlog::level::trace;
+    }
+
     try {
         auto console_sink =
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        console_sink->set_level(spdlog::level::debug);
+        console_sink->set_level(level);
 
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-            "logs/log.txt", true);
-        file_sink->set_level(spdlog::level::trace);
+            config.log_file_path, true);
+        file_sink->set_level(level);
 
         spdlog::sinks_init_list sink_list = {file_sink, console_sink};
 
         spdlog::logger logger("default", sink_list.begin(), sink_list.end());
-        logger.set_level(spdlog::level::debug);
+        logger.set_level(level);
 
         spdlog::set_default_logger(std::make_shared<spdlog::logger>(
             "default", spdlog::sinks_init_list({console_sink, file_sink})));
-
-        return 0;
     } catch (const spdlog::spdlog_ex &ex) {
-        std::cout << "Log initialization failed: " << ex.what() << std::endl;
-
+        std::cerr << "Log initialization failed: " << ex.what() << std::endl;
         return 1;
     }
-}
 
-void lib_init() {
+    spdlog::info("Starting 3d_reconstruction");
     spdlog::info("============[LIB VERSIONS]=============");
     spdlog::info("spdlog: {}.{}.{}",
                  SPDLOG_VER_MAJOR,
@@ -161,47 +299,36 @@ void lib_init() {
                  GLFW_VERSION_MINOR,
                  GLFW_VERSION_REVISION);
     spdlog::info("=======================================");
+
+    return 0;
 }
 
-std::optional<configuration> parse_config(std::string_view config_file_path) {
-    configuration config;
-
-    std::ifstream config_file(config_file_path.data());
-    std::string config_str((std::istreambuf_iterator<char>(config_file)),
-                           std::istreambuf_iterator<char>());
-    config_file.close();
-
-    auto ret = json::parse(config_str);
-    if (!ret) {
-        spdlog::error("Failed to parse config file");
-        return std::nullopt;
-    }
-
-    auto config_value = *ret;
-
-    auto rs_operator = config_value["rs_operator"];
-    config.bag_file_path = rs_operator.get("bag_file_path", "input.bag");
-    config.capture_count = rs_operator.get("capture_count", 2);
-    config.capture_interval = rs_operator.get("capture_interval", 30);
-    config.save_split_files = rs_operator.get("save_split_files", true);
-
-    auto filter = rs_operator["filter"];
-    config.run_filter = filter.get("run_filter", true);
-    config.filter_x_min = filter["x"].get("min", -0.5f);
-    config.filter_x_max = filter["x"].get("max", 0.5f);
-    config.filter_y_min = filter["y"].get("min", -0.5f);
-    config.filter_y_max = filter["y"].get("max", 0.5f);
-    config.filter_z_min = filter["z"].get("min", -0.5f);
-    config.filter_z_max = filter["z"].get("max", 0.5f);
-
-    auto pointcloud_aligner = config_value["pointcloud_aligner"];
-    config.k_search = pointcloud_aligner.get("k_search", 30);
-    config.iteration_count = pointcloud_aligner.get("iteration_count", 5);
-    config.visualization = pointcloud_aligner.get("visualization", true);
-    config.visualization_per_iteration =
-        pointcloud_aligner.get("visualization_per_iteration", true);
-    config.save_every_aligned_pair =
-        pointcloud_aligner.get("save_every_aligned_pair", true);
-
-    return config;
+void build_cli(lyra::cli &cli, const std::string &command,
+               const std::string &help_message, bool *show_help,
+               init_configuration *init_config,
+               const std::function<void(lyra::command &)> &builder,
+               const std::function<void(const lyra::group &)> &run) {
+    auto cmd =
+        lyra::command(command, run)
+            .help(help_message)
+            .add_argument(
+                lyra::help(*show_help).description("Show help message"))
+            .add_argument(lyra::opt(init_config->debug_level)
+                              .optional()
+                              .name("-d")
+                              .name("--debug")
+                              .help("Set log level to debug, will be "
+                                    "override by verbose"))
+            .add_argument(lyra::opt(init_config->verbose_level)
+                              .optional()
+                              .name("-v")
+                              .name("--verbose")
+                              .help("Set log level to verbose"))
+            .add_argument(lyra::opt(init_config->log_file_path, "file path")
+                              .optional()
+                              .name("-g")
+                              .name("--log-file")
+                              .help("The log file save path"));
+    builder(cmd);
+    cli.add_argument(cmd);
 }

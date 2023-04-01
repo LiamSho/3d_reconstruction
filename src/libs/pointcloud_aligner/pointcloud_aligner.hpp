@@ -24,6 +24,16 @@
 
 namespace tdr {
 
+struct pointcloud_aligner_configuration {
+    std::string file_save_directory{"icp_align"};
+    std::string source_files_directory{"source"};
+
+    bool visualization = false;
+    bool visualization_per_iteration = false;
+    uint iteration_count = 30;
+    int k_search = 30;
+};
+
 class AlignerPointRepresentation
     : public pcl::PointRepresentation<pcl::PointNormal> {
     using pcl::PointRepresentation<pcl::PointNormal>::nr_dimensions_;
@@ -35,40 +45,26 @@ class AlignerPointRepresentation
 
 class pointcloud_aligner {
   private:
-    const std::string_view file_save_directory{"icp_align"};
-
-    std::vector<pcl_cloud> clouds;
+    std::vector<std::filesystem::path> cloud_files;
     Eigen::Matrix4f global_transform;
-
-    bool visualization = true;
-    bool save_every_aligned_pair = false;
-    bool visualization_per_iteration = false;
-    size_t iteration_count = 30;
-    int k_search = 30;
 
     pcl::visualization::PCLVisualizer *visualizer;
     int v_vp_1 = 1;
     int v_vp_2 = 2;
 
+    pointcloud_aligner_configuration config;
+
     void clean_visualization();
     void show_clouds_left(const pcl_cloud &pc_tgt, const pcl_cloud &pc_src);
     void show_clouds_right(const pcl_cloud_normal &pc_tgt,
                            const pcl_cloud_normal &pc_src);
-
-  public:
     void pair_align(const pcl_cloud &pc_src, const pcl_cloud &pc_tgt,
                     const pcl_cloud &output, Eigen::Matrix4f &final_transform,
                     size_t align_count);
 
-    explicit pointcloud_aligner(std::vector<pcl_cloud> v_clouds);
+  public:
+    explicit pointcloud_aligner(const pointcloud_aligner_configuration &config);
     void align();
-
-    void setSaveEveryAlignedPair(bool b);
-    void setVisualizationPerIteration(bool v);
-    void setIterationCount(size_t v);
-    void setKSearch(int v);
-
-    void setVisualization(bool v);
 
     Eigen::Matrix4f get_global_transform();
 };

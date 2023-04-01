@@ -24,41 +24,33 @@
 
 namespace tdr {
 
+struct realsense_operator_configuration {
+    std::string bag_file_path{};
+    std::string split_file_save_path{"rs_split"};
+    int capture_interval = 30;
+    int capture_count = 30;
+
+    bool run_passthrough_filter = false;
+    float passthrough_filter_x_min = -0.5f;
+    float passthrough_filter_x_max = 0.5f;
+    float passthrough_filter_y_min = -0.5f;
+    float passthrough_filter_y_max = 0.5f;
+    float passthrough_filter_z_min = -0.5f;
+    float passthrough_filter_z_max = 0.5f;
+};
+
 class realsense_operator {
   private:
-    std::string_view bag_file_path;
+    realsense_operator_configuration config;
 
-    rs2::pipeline pipeline;
-    rs2::config config;
-    rs2::pointcloud pc;
-
-    std::string_view splitFileSavePath = {"rs_split"};
-    bool saveSplitFiles = true;
-    int captureInterval = 30;
-    int captureCount = 30;
-
-    bool runPassthroughFilter = false;
-    float passthroughFilterXMin = 0.0f;
-    float passthroughFilterXMax = 0.0f;
-    float passthroughFilterYMin = 0.0f;
-    float passthroughFilterYMax = 0.0f;
-    float passthroughFilterZMin = 0.0f;
-    float passthroughFilterZMax = 0.0f;
+    rs2::pipeline rs2_pipeline;
+    rs2::config rs2_config;
+    rs2::pointcloud rs2_pc;
 
   public:
-    explicit realsense_operator(std::string_view bag_file_path);
+    explicit realsense_operator(const realsense_operator_configuration &config);
 
     void split_pointclouds();
-    void split_pointclouds(const std::function<void(pcl_cloud)> &callback);
-
-    void setSplitFileSavePath(std::string_view v);
-    void setSaveSplitFiles(bool v);
-    void setCaptureInterval(int v);
-    void setCaptureCount(int v);
-    void setRunPassthroughFilter(bool v);
-    void setPassthroughFilterX(float min, float max);
-    void setPassthroughFilterY(float min, float max);
-    void setPassthroughFilterZ(float min, float max);
 };
 
 } // namespace tdr
