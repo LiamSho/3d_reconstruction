@@ -15,11 +15,9 @@
  */
 
 #include "../include/lyra.hpp"
-#include "../include/meojson.hpp"
 #include "libs/pointcloud_aligner/pointcloud_aligner.hpp"
+#include "libs/pointcloud_processor/pointcloud_processor.hpp"
 #include "libs/realsense_operator/realsense_operator.hpp"
-#include "utils/env_util.hpp"
-#include "utils/pcl_type_definition.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <librealsense2/rs.hpp>
@@ -199,7 +197,7 @@ struct pointcloud_aligner_command {
                         lyra::opt(config.iteration_count, "count")
                             .optional()
                             .name("-i")
-                            .name("iteration")
+                            .name("--iteration")
                             .help("Set the iteration count, default to 30"))
                     .add_argument(
                         lyra::opt(config.k_search, "depth")
@@ -234,13 +232,118 @@ struct pointcloud_aligner_command {
     }
 };
 
+struct pointcloud_processor_command {
+    tdr::pointcloud_processor_configuration config;
+    bool show_help = false;
+
+    init_configuration init_config;
+
+    explicit pointcloud_processor_command(lyra::cli &cli) {
+        build_cli(
+            cli,
+            "pointcloud-processor",
+            "Run pointcloud processor module",
+            &show_help,
+            &init_config,
+            [this](lyra::command &c) {
+                c.add_argument(
+                     lyra::opt(config.input_directory, "directory")
+                         .optional()
+                         .name("-i")
+                         .name("--input-dir")
+                         .help(
+                             "The directory where source pcd files are saved, "
+                             "default to \"input\""))
+                    .add_argument(
+                        lyra::opt(config.output_directory, "directory")
+                            .optional()
+                            .name("-o")
+                            .name("--output-dir")
+                            .help("The directory to save the output pcd files, "
+                                  "default to \"output\""))
+                    .add_argument(lyra::opt(config.run_translation)
+                                      .optional()
+                                      .name("-t")
+                                      .name("--translation")
+                                      .help("Run translation transform"))
+                    .add_argument(
+                        lyra::opt(config.translation_x, "x")
+                            .optional()
+                            .name("-x")
+                            .name("--x-translation")
+                            .help("X axis of translation transform, default to "
+                                  "0.0"))
+                    .add_argument(
+                        lyra::opt(config.translation_y, "y")
+                            .optional()
+                            .name("-y")
+                            .name("--y-translation")
+                            .help("Y axis of translation transform, default to "
+                                  "0.0"))
+                    .add_argument(
+                        lyra::opt(config.translation_z, "z")
+                            .optional()
+                            .name("-z")
+                            .name("--z-translation")
+                            .help("Z axis of translation transform, default to "
+                                  "0.0"))
+                    .add_argument(lyra::opt(config.run_rotation)
+                                      .optional()
+                                      .name("-r")
+                                      .name("--rotation")
+                                      .help("Run rotation transform"))
+                    .add_argument(lyra::opt(config.incremental_rotation)
+                                      .optional()
+                                      .name("-s")
+                                      .name("--incremental-rotation")
+                                      .help("Incremental rotation mode for "
+                                            "rotation transform"))
+                    .add_argument(
+                        lyra::opt(config.rotation_degree_base, "degree")
+                            .optional()
+                            .name("-g")
+                            .name("--degree")
+                            .help("The rotation degree base value, default to "
+                                  "0.0"))
+                    .add_argument(
+                        lyra::opt(config.unit, "unit")
+                            .optional()
+                            .name("-u")
+                            .name("--unit")
+                            .choices("x", "y", "z")
+                            .help("Rotation axis unit, could be \"x\", \"y\" "
+                                  "or \"z\", default to \"y\""));
+            },
+            [this](const lyra::group &g) { run(g); });
+    }
+
+    void run(const lyra::group &g) const {
+        if (show_help) {
+            std::cout << g;
+            return;
+        }
+
+        auto init_result = init(init_config);
+        if (init_result != 0) {
+            return;
+        }
+
+        tdr::pointcloud_processor processor(config);
+        processor.run();
+
+        spdlog::info("Pointcloud processor module finished");
+    }
+};
+
 int main(int argc, char **argv) {
     auto cli = lyra::cli();
     std::string command;
     bool show_help = false;
     cli.add_argument(lyra::help(show_help).description("Show help message"));
-    [[maybe_unused]] pointcloud_aligner_command pointcloudAlignerCommand{cli};
     [[maybe_unused]] realsense_operator_command realsenseOperatorCommand{cli};
+    [[maybe_unused]] pointcloud_aligner_command pointcloudAlignerCommand{cli};
+    [[maybe_unused]] pointcloud_processor_command pointcloudProcessorCommand{
+        cli};
     auto result = cli.parse({argc, argv});
 
     if (show_help) {
