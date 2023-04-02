@@ -106,8 +106,8 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
 
     // Align
     pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> reg;
-    reg.setTransformationEpsilon(1e-6);
-    reg.setMaxCorrespondenceDistance(0.05);
+    reg.setTransformationEpsilon(config.epsilon);
+    reg.setMaxCorrespondenceDistance(config.distance_threshold);
     reg.setPointRepresentation(
         pcl::make_shared<const AlignerPointRepresentation>(point_rep));
 
@@ -143,7 +143,8 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
         if (std::abs((reg.getLastIncrementalTransformation() - prev).sum()) <
             reg.getTransformationEpsilon()) {
             reg.setMaxCorrespondenceDistance(
-                reg.getMaxCorrespondenceDistance() - 0.001);
+                reg.getMaxCorrespondenceDistance() -
+                config.distance_threshold_step);
         }
 
         prev = reg.getLastIncrementalTransformation();
@@ -159,6 +160,10 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
 
     // Transform target to source frame
     pcl::transformPointCloud(*pc_tgt, *output, target_to_source);
+
+    // Log ICP result
+    spdlog::info("ICP has converged: {}", reg.hasConverged());
+    spdlog::info("ICP score: {}", reg.getFitnessScore());
 
     if (this->config.visualization) {
         // Visualize

@@ -32,6 +32,10 @@ struct pointcloud_aligner_configuration {
     bool visualization_per_iteration = false;
     uint iteration_count = 30;
     int k_search = 30;
+
+    double epsilon = 1e-6;
+    double distance_threshold = 0.05;
+    double distance_threshold_step = 0.001;
 };
 
 class AlignerPointRepresentation

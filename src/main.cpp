@@ -205,7 +205,27 @@ struct pointcloud_aligner_command {
                             .name("-k")
                             .name("--k-search")
                             .help(
-                                "Set the depth of the kd-tree, default is 30"));
+                                "Set the depth of the kd-tree, default to 30"))
+                    .add_argument(lyra::opt(config.epsilon, "value")
+                                      .optional()
+                                      .name("-e")
+                                      .name("--epsilon")
+                                      .help("Set the ICP transformation "
+                                            "epsilon, default to 1e-6"))
+                    .add_argument(lyra::opt(config.distance_threshold, "value")
+                                      .optional()
+                                      .name("-t")
+                                      .name("--threshold")
+                                      .help("Set the ICP distance threshold, "
+                                            "default to 0.05"))
+                    .add_argument(
+                        lyra::opt(config.epsilon, "value")
+                            .optional()
+                            .name("-u")
+                            .name("--threshold-step")
+                            .help(
+                                "Set the ICP distance threshold step, must "
+                                "be smaller than threshold, default to 0.001"));
             },
             [this](const lyra::group &g) { run(g); });
     }
