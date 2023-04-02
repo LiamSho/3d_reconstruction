@@ -21,7 +21,6 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-using pcl_viewer = pcl::visualization::PCLVisualizer::Ptr;
 using pcl_cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr;
 using pcl_cloud_normal = pcl::PointCloud<pcl::PointNormal>::Ptr;
 
