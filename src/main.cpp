@@ -322,7 +322,7 @@ struct pointcloud_processor_command {
                     .add_argument(
                         lyra::opt(config.rotation_degree_base, "degree")
                             .optional()
-                            .name("-g")
+                            .name("-e")
                             .name("--degree")
                             .help("The rotation degree base value, default to "
                                   "0.0"))
@@ -394,7 +394,7 @@ struct pointcloud_fuser_command {
                                   "default to \"output\""))
                     .add_argument(lyra::opt(config.voxel_grid_size, "value")
                                       .optional()
-                                      .name("-g")
+                                      .name("-x")
                                       .name("--grid-size")
                                       .help("The voxel grid cube size (m), "
                                             "default to 0.01"));
