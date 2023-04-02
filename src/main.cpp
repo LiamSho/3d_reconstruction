@@ -447,11 +447,12 @@ void build_cli(lyra::cli &cli, const std::string &command,
                               .name("-v")
                               .name("--verbose")
                               .help("Set log level to verbose"))
-            .add_argument(lyra::opt(init_config->log_file_path, "file path")
-                              .optional()
-                              .name("-g")
-                              .name("--log-file")
-                              .help("The log file save path"));
+            .add_argument(
+                lyra::opt(init_config->log_file_path, "file path")
+                    .optional()
+                    .name("-g")
+                    .name("--log-file")
+                    .help("The log file save path, default to \"log.txt\""));
     builder(cmd);
     cli.add_argument(cmd);
 }
