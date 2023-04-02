@@ -16,6 +16,7 @@
 
 #include "../include/lyra.hpp"
 #include "libs/pointcloud_aligner/pointcloud_aligner.hpp"
+#include "libs/pointcloud_fuser/pointcloud_fuser.hpp"
 #include "libs/pointcloud_processor/pointcloud_processor.hpp"
 #include "libs/realsense_operator/realsense_operator.hpp"
 #include <GLFW/glfw3.h>
@@ -355,6 +356,70 @@ struct pointcloud_processor_command {
     }
 };
 
+struct pointcloud_fuser_command {
+    tdr::pointcloud_fuser_configuration config;
+    bool show_help = false;
+
+    init_configuration init_config;
+
+    explicit pointcloud_fuser_command(lyra::cli &cli) {
+        build_cli(
+            cli,
+            "pointcloud-fuser",
+            "Run pointcloud fuser module",
+            &show_help,
+            &init_config,
+            [this](lyra::command &c) {
+                c.add_argument(
+                     lyra::opt(config.pcd_input_dir, "directory")
+                         .optional()
+                         .name("-p")
+                         .name("--pcd-input-dir")
+                         .help(
+                             "The directory where source pcd files are saved, "
+                             "default to \"pcd_input\""))
+                    .add_argument(
+                        lyra::opt(config.matrix_input_dire, "directory")
+                            .optional()
+                            .name("-m")
+                            .name("--matrix-input-dir")
+                            .help("The directory where source matrix files are "
+                                  "saved, default to \"matrix_input\""))
+                    .add_argument(
+                        lyra::opt(config.output_dir, "directory")
+                            .optional()
+                            .name("-o")
+                            .name("--output-dir")
+                            .help("The directory to save the output pcd files, "
+                                  "default to \"output\""))
+                    .add_argument(lyra::opt(config.voxel_grid_size, "value")
+                                      .optional()
+                                      .name("-g")
+                                      .name("--grid-size")
+                                      .help("The voxel grid cube size (m), "
+                                            "default to 0.01"));
+            },
+            [this](const lyra::group &g) { run(g); });
+    }
+
+    void run(const lyra::group &g) const {
+        if (show_help) {
+            std::cout << g;
+            return;
+        }
+
+        auto init_result = init(init_config);
+        if (init_result != 0) {
+            return;
+        }
+
+        tdr::pointcloud_fuser fuser(config);
+        fuser.fuse();
+
+        spdlog::info("Pointcloud fuser module finished");
+    }
+};
+
 int main(int argc, char **argv) {
     auto cli = lyra::cli();
     std::string command;
@@ -364,6 +429,7 @@ int main(int argc, char **argv) {
     [[maybe_unused]] pointcloud_aligner_command pointcloudAlignerCommand{cli};
     [[maybe_unused]] pointcloud_processor_command pointcloudProcessorCommand{
         cli};
+    [[maybe_unused]] pointcloud_fuser_command pointcloudFuserCommand{cli};
     auto result = cli.parse({argc, argv});
 
     if (show_help) {
