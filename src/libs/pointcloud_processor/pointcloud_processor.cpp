@@ -30,8 +30,10 @@ tdr::pointcloud_processor::pointcloud_processor(
 
 void tdr::pointcloud_processor::run() {
 
+    tdr::utils::fs::ensure_directory_empty(config.output_directory);
+
     spdlog::info("Input directory: {}", config.input_directory);
-    spdlog::info("Input directory: {}", config.output_directory);
+    spdlog::info("Output directory: {}", config.output_directory);
 
     auto content =
         tdr::utils::fs::get_directory_content(config.input_directory);
@@ -122,7 +124,7 @@ void tdr::pointcloud_processor::run() {
 
         pcl::io::savePCDFile(output_file.str(), *cloud, true);
         spdlog::info("Saved file: {}", output_file.str());
-        
+
         i++;
     }
 }

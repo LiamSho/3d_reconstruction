@@ -217,7 +217,7 @@ void tdr::pointcloud_aligner::align() {
 
     for (size_t i = 1; i < pc_count; ++i) {
 
-        spdlog::info("Align: No.{:0>3} to No.{:0>3}", i - 1, i);
+        spdlog::info("Align: No.{:0>3} to No.{:0>3}", i, i + 1);
         pcl::io::loadPCDFile(this->cloud_files[i - 1], *source);
         pcl::io::loadPCDFile(this->cloud_files[i], *target);
 

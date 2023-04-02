@@ -36,6 +36,8 @@ void tdr::pointcloud_fuser::fuse() const {
     auto matrix_files =
         tdr::utils::fs::get_directory_content(config.matrix_input_dire);
 
+    tdr::utils::fs::ensure_directory_empty(config.output_dir);
+    
     std::sort(pcd_files.begin(), pcd_files.end());
     std::sort(matrix_files.begin(), matrix_files.end());
 

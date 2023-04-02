@@ -67,7 +67,7 @@ struct realsense_operator_command {
                         lyra::opt(config.split_file_save_path, "directory")
                             .optional()
                             .name("-o")
-                            .name("--save-dir")
+                            .name("--output-dir")
                             .help("The directory to save the result, "
                                   "default to \"rs_split\""))
                     .add_argument(
@@ -172,14 +172,14 @@ struct pointcloud_aligner_command {
                      lyra::opt(config.file_save_directory, "directory")
                          .optional()
                          .name("-o")
-                         .name("--save-dir")
+                         .name("--output-dir")
                          .help("The directory to save the result, "
                                "default to \"icp_align\""))
                     .add_argument(
                         lyra::opt(config.source_files_directory, "directory")
                             .optional()
-                            .name("-s")
-                            .name("--source-dir")
+                            .name("-i")
+                            .name("--input-dir")
                             .help("The directory where source pcd files are "
                                   "saved, "
                                   "default to \"source\""))
@@ -197,7 +197,7 @@ struct pointcloud_aligner_command {
                     .add_argument(
                         lyra::opt(config.iteration_count, "count")
                             .optional()
-                            .name("-i")
+                            .name("-n")
                             .name("--iteration")
                             .help("Set the iteration count, default to 30"))
                     .add_argument(
