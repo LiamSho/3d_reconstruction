@@ -17,6 +17,7 @@
 #include "pointcloud_aligner.hpp"
 
 #include "../../utils/fs_utils.hpp"
+#include "../../utils/matrix_util.hpp"
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
@@ -238,17 +239,25 @@ void tdr::pointcloud_aligner::align() {
         spdlog::info(logStream.str());
 
         std::stringstream ss;
-        ss << "icp_align/" << fmt::format("{:0>3}", i) << ".pcd";
+        ss << config.file_save_directory << "/" << fmt::format("{:0>3}", i)
+           << ".pcd";
         pcl::io::savePCDFile(ss.str(), *result, true);
 
         ss.str("");
-        ss << "icp_align/" << fmt::format("{:0>3}", i) << "_transform.txt";
+        ss << config.file_save_directory << "/" << fmt::format("{:0>3}", i)
+           << "_transform_formatted.txt";
         std::ofstream ofs(ss.str());
         ofs << "Pair transform: \n" << pair_transform.array() << std::endl;
         ofs << "Global transform: \n"
             << this->global_transform.array() << std::endl;
         ofs.flush();
         ofs.close();
+
+        ss.str("");
+        ss << config.file_save_directory << "/" << fmt::format("{:0>3}", i)
+           << "_transform.txt";
+        tdr::utils::matrix::write_matrix4f_to_file(pair_transform, ss.str());
+
         ss.clear();
     }
 }
