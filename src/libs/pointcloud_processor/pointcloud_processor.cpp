@@ -122,5 +122,7 @@ void tdr::pointcloud_processor::run() {
 
         pcl::io::savePCDFile(output_file.str(), *cloud, true);
         spdlog::info("Saved file: {}", output_file.str());
+        
+        i++;
     }
 }
