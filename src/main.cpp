@@ -111,28 +111,28 @@ struct realsense_operator_command {
                             .help("Set the maximum x value for passthrough "
                                   "filter, default to 0.5"))
                     .add_argument(
-                        lyra::opt(config.passthrough_filter_x_min, "min")
+                        lyra::opt(config.passthrough_filter_y_min, "min")
                             .optional()
                             .name("-y")
                             .name("--y-min")
                             .help("Set the minimum y value for passthrough "
                                   "filter, default to -0.5"))
                     .add_argument(
-                        lyra::opt(config.passthrough_filter_x_max, "max")
+                        lyra::opt(config.passthrough_filter_y_max, "max")
                             .optional()
                             .name("-Y")
                             .name("--y-max")
                             .help("Set the maximum y value for passthrough "
                                   "filter, default to 0.5"))
                     .add_argument(
-                        lyra::opt(config.passthrough_filter_x_min, "min")
+                        lyra::opt(config.passthrough_filter_z_min, "min")
                             .optional()
                             .name("-z")
                             .name("--z-min")
                             .help("Set the minimum z value for passthrough "
                                   "filter, default to -0.5"))
                     .add_argument(
-                        lyra::opt(config.passthrough_filter_x_max, "max")
+                        lyra::opt(config.passthrough_filter_z_max, "max")
                             .optional()
                             .name("-Z")
                             .name("--z-max")
