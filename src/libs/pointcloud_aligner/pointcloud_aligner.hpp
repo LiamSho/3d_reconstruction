@@ -29,7 +29,6 @@ struct pointcloud_aligner_configuration {
     std::string source_files_directory{"source"};
 
     bool visualization = false;
-    bool visualization_per_iteration = false;
     uint iteration_count = 30;
     int k_search = 30;
 
@@ -60,8 +59,7 @@ class pointcloud_aligner {
 
     void clean_visualization();
     void show_clouds_left(const pcl_cloud &pc_tgt, const pcl_cloud &pc_src);
-    void show_clouds_right(const pcl_cloud_normal &pc_tgt,
-                           const pcl_cloud_normal &pc_src);
+    void show_clouds_right(const pcl_cloud &pc_tgt, const pcl_cloud &pc_src);
     void pair_align(const pcl_cloud &pc_src, const pcl_cloud &pc_tgt,
                     const pcl_cloud &output, Eigen::Matrix4f &final_transform,
                     size_t align_count);

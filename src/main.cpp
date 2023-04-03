@@ -189,12 +189,6 @@ struct pointcloud_aligner_command {
                                       .name("--visualization")
                                       .help("Enable visualization"))
                     .add_argument(
-                        lyra::opt(config.visualization_per_iteration)
-                            .optional()
-                            .name("-p")
-                            .name("--visualization-per-iteration")
-                            .help("Pause and visualize every iteration"))
-                    .add_argument(
                         lyra::opt(config.iteration_count, "count")
                             .optional()
                             .name("-n")

@@ -149,11 +149,6 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
         }
 
         prev = reg.getLastIncrementalTransformation();
-
-        if (this->config.visualization_per_iteration) {
-            this->show_clouds_right(points_with_normals_tgt,
-                                    points_with_normals_src);
-        }
     }
 
     // Target -> Source transformation
@@ -166,27 +161,7 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     spdlog::info("ICP has converged: {}", reg.hasConverged());
     spdlog::info("ICP score: {}", reg.getFitnessScore());
 
-    if (this->config.visualization) {
-        // Visualize
-        this->visualizer->removePointCloud("vp2_source");
-        this->visualizer->removePointCloud("vp2_target");
-
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> tgt_h(
-            output, 0, 255, 0);
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> src_h(
-            pc_src, 255, 0, 0);
-
-        this->visualizer->addPointCloud(
-            output, tgt_h, "vp2_target", this->v_vp_2);
-        this->visualizer->addPointCloud(
-            pc_src, src_h, "vp2_source", this->v_vp_2);
-
-        spdlog::info("Pair align done. Press q to continue the registration");
-        this->visualizer->spin();
-
-        this->visualizer->removePointCloud("vp2_source");
-        this->visualizer->removePointCloud("vp2_target");
-    }
+    this->show_clouds_right(output, pc_src);
 
     *output += *pc_src;
     final_transform = target_to_source;
@@ -296,8 +271,8 @@ void tdr::pointcloud_aligner::show_clouds_left(const pcl_cloud &pc_tgt,
     this->visualizer->spin();
 }
 
-void tdr::pointcloud_aligner::show_clouds_right(
-    const pcl_cloud_normal &pc_tgt, const pcl_cloud_normal &pc_src) {
+void tdr::pointcloud_aligner::show_clouds_right(const pcl_cloud &pc_tgt,
+                                                const pcl_cloud &pc_src) {
 
     if (!this->config.visualization) {
         return;
@@ -306,25 +281,14 @@ void tdr::pointcloud_aligner::show_clouds_right(
     this->visualizer->removePointCloud("vp2_source");
     this->visualizer->removePointCloud("vp2_target");
 
-    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal>
-        tgt_color_handler(pc_tgt, "curvature");
-    if (!tgt_color_handler.isCapable()) {
-        spdlog::warn(
-            "Can not create curvature color handler for Target in vp2");
-    }
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> tgt_h(
+        pc_tgt, 0, 255, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> src_h(
+        pc_src, 255, 0, 0);
 
-    pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal>
-        src_color_handler(pc_src, "curvature");
-    if (!src_color_handler.isCapable()) {
-        spdlog::warn(
-            "Can not create curvature color handler for Source in vp2");
-    }
+    this->visualizer->addPointCloud(pc_tgt, tgt_h, "vp2_target", this->v_vp_2);
+    this->visualizer->addPointCloud(pc_src, src_h, "vp2_source", this->v_vp_2);
 
-    this->visualizer->addPointCloud(
-        pc_tgt, tgt_color_handler, "vp2_target", this->v_vp_2);
-    this->visualizer->addPointCloud(
-        pc_src, src_color_handler, "vp2_source", this->v_vp_2);
-
-    spdlog::info("Update visualizer, press q to continue the iteration");
+    spdlog::info("Pair align done. Press q to continue the registration");
     this->visualizer->spin();
 }
