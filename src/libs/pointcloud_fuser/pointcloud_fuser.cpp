@@ -37,7 +37,7 @@ void tdr::pointcloud_fuser::fuse() const {
         tdr::utils::fs::get_directory_content(config.matrix_input_dire);
 
     tdr::utils::fs::ensure_directory_empty(config.output_dir);
-    
+
     std::sort(pcd_files.begin(), pcd_files.end());
     std::sort(matrix_files.begin(), matrix_files.end());
 
@@ -52,10 +52,11 @@ void tdr::pointcloud_fuser::fuse() const {
     pcl_cloud source_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl_cloud target_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-    pcl::io::loadPCDFile(pcd_files[0], *source_cloud);
+    // load target cloud
+    pcl::io::loadPCDFile(pcd_files[matrix_files.size()], *target_cloud);
     std::stringstream ss;
 
-    for (size_t i = 0; i < matrix_files.size(); i++) {
+    for (size_t i = matrix_files.size(); i > 0; i--) {
 
         // i -> i+1 transform
         auto matrix =
@@ -64,22 +65,22 @@ void tdr::pointcloud_fuser::fuse() const {
         ss.str("");
         ss << matrix.array();
         spdlog::info(
-            "Transform matrix from {:0>3} to {:0>3}:\n {}", i, i + 1, ss.str());
+            "Transform matrix from {:0>3} to {:0>3}:\n {}", i + 1, i, ss.str());
 
-        // load target cloud
-        pcl::io::loadPCDFile(pcd_files[i + 1], *target_cloud);
+        // load source cloud
+        pcl::io::loadPCDFile(pcd_files[i - 1], *source_cloud);
 
-        // apply transform to source cloud to get the aligned target cloud
-        pcl::transformPointCloud(*source_cloud, *source_cloud, matrix);
+        // apply transform to target cloud to get the aligned source cloud
+        pcl::transformPointCloud(*target_cloud, *target_cloud, matrix);
 
         // fuse two clouds
-        *target_cloud += *source_cloud;
+        *source_cloud += *target_cloud;
         spdlog::info("Fused cloud size: {}", target_cloud->size());
 
         // apple voxel grid filter
         pcl_cloud filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::VoxelGrid<pcl::PointXYZ> voxel_grid;
-        voxel_grid.setInputCloud(target_cloud);
+        voxel_grid.setInputCloud(source_cloud);
         voxel_grid.setLeafSize(config.voxel_grid_size,
                                config.voxel_grid_size,
                                config.voxel_grid_size);
@@ -89,7 +90,7 @@ void tdr::pointcloud_fuser::fuse() const {
         // save final files
         pcl::io::savePCDFile(config.output_dir + "/fused_" + std::to_string(i) +
                                  ".pcd",
-                             *target_cloud,
+                             *source_cloud,
                              true);
         pcl::io::savePCDFile(config.output_dir + "/fused_" + std::to_string(i) +
                                  "_filtered.pcd",
@@ -97,5 +98,7 @@ void tdr::pointcloud_fuser::fuse() const {
                              true);
 
         spdlog::info("Fused fuse_of_{:0>3} to cloud {:0>3}", i, i + 1);
+
+        target_cloud = source_cloud;
     }
 }
