@@ -46,6 +46,14 @@ void tdr::realsense_operator::split_pointclouds() {
     bool has_frame = true;
     bool continue_capture = true;
 
+    if (config.skip != 0) {
+        spdlog::info("Skipping {} frames...", config.skip);
+        for (int i = 1; i <= config.skip; i++) {
+            has_frame = this->rs2_pipeline.wait_for_frames();
+        }
+        spdlog::info("Skip done.");
+    }
+
     while (has_frame && continue_capture) {
         rs2::frameset frame;
 

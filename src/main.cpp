@@ -84,6 +84,12 @@ struct realsense_operator_command {
                                       .name("--count")
                                       .help("Total frames to capture"))
                     .add_argument(
+                        lyra::opt(config.skip, "count")
+                            .optional()
+                            .name("-k")
+                            .name("--skip")
+                            .help("Skip the first n frames, default to 0"))
+                    .add_argument(
                         lyra::opt(config.run_passthrough_filter)
                             .optional()
                             .name("-p")

@@ -29,6 +29,7 @@ struct realsense_operator_configuration {
     std::string split_file_save_path{"rs_split"};
     int capture_interval = 30;
     int capture_count = 30;
+    int skip = 0;
 
     bool run_passthrough_filter = false;
     float passthrough_filter_x_min = -0.5f;
