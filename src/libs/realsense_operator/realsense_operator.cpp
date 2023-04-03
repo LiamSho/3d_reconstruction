@@ -30,7 +30,7 @@ tdr::realsense_operator::realsense_operator(
 
     this->config = config;
 
-    this->rs2_config.enable_device_from_file(this->config.bag_file_path.data());
+    this->rs2_config.enable_device_from_file(this->config.bag_file_path);
     this->rs2_config.enable_stream(rs2_stream::RS2_STREAM_DEPTH);
 }
 
@@ -72,6 +72,10 @@ void tdr::realsense_operator::split_pointclouds() {
                 auto points = this->rs2_pc.calculate(depth);
 
                 auto cloud = tdr::utils::points::rs2_points_to_pcl(points);
+
+                // Remove NaN
+                pcl::Indices indices;
+                pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
 
                 // Filter
                 if (this->config.run_passthrough_filter) {
