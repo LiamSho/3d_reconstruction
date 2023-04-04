@@ -47,8 +47,6 @@ tdr::pointcloud_aligner::pointcloud_aligner(
         this->config.source_files_directory);
     std::sort(this->cloud_files.begin(), this->cloud_files.end());
 
-    this->global_transform = Eigen::Matrix4f::Identity();
-
     if (this->config.visualization) {
         this->visualizer = new pcl::visualization::PCLVisualizer();
         this->visualizer->setWindowName(
@@ -88,17 +86,20 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     norm_set.setSearchMethod(tree);
     norm_set.setKSearch(this->config.k_search);
 
-    spdlog::info("Computing surface normals and curvature for source");
+    spdlog::info("[P{:0>3}] Computing surface normals and curvature for source",
+                 align_count);
     norm_set.setInputCloud(src);
     norm_set.compute(*points_with_normals_src);
     pcl::copyPointCloud(*src, *points_with_normals_src);
 
-    spdlog::info("Computing surface normals and curvature for target");
+    spdlog::info("[P{:0>3}] Computing surface normals and curvature for target",
+                 align_count);
     norm_set.setInputCloud(tgt);
     norm_set.compute(*points_with_normals_tgt);
     pcl::copyPointCloud(*tgt, *points_with_normals_tgt);
 
-    spdlog::info("Surface normals and curvature compute done");
+    spdlog::info("[P{:0>3}] Surface normals and curvature compute done",
+                 align_count);
 
     // Point representation and weight
     AlignerPointRepresentation point_rep;
@@ -125,8 +126,7 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     for (uint i = 1; i <= this->config.iteration_count; ++i) {
 
         if (align_count >= 0) {
-            spdlog::info(
-                "Align count {:0>3}, Iteration Nr.{:0>3}", align_count, i);
+            spdlog::info("[P{:0>3}] Iteration Nr.{:0>3}", align_count, i);
         } else {
             spdlog::info("Iteration Nr.{:0>3}", i);
         }
@@ -158,8 +158,9 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     pcl::transformPointCloud(*pc_tgt, *output, target_to_source);
 
     // Log ICP result
-    spdlog::info("ICP has converged: {}", reg.hasConverged());
-    spdlog::info("ICP score: {}", reg.getFitnessScore());
+    spdlog::info(
+        "[P{:0>3}] ICP has converged: {}", align_count, reg.hasConverged());
+    spdlog::info("[P{:0>3}] ICP score: {}", align_count, reg.getFitnessScore());
 
     this->show_clouds_right(output, pc_src);
 
@@ -167,7 +168,8 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     final_transform = target_to_source;
 
     if (align_count >= 0) {
-        spdlog::info("Align count {:0>3} done", align_count);
+        spdlog::info(
+            "[P{:0>3}] Align count {:0>3} done", align_count, align_count);
     } else {
         spdlog::info("Pair align done");
     }
@@ -184,33 +186,37 @@ void tdr::pointcloud_aligner::align() {
         return;
     }
 
-    Eigen::Matrix4f pair_transform = Eigen::Matrix4f::Identity();
+    std::vector<pcl_cloud> clouds;
+    for (const auto &f : this->cloud_files) {
+        pcl_cloud cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::io::loadPCDFile(f, *cloud);
+        clouds.push_back(cloud);
+    }
 
-    pcl_cloud source(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl_cloud target(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl_cloud result(new pcl::PointCloud<pcl::PointXYZ>);
-
+#ifdef USE_OPENMP
+    omp_set_num_threads(config.threads);
+#pragma omp parallel for default(none) shared(pc_count) shared(clouds)
+#endif
     for (size_t i = 1; i < pc_count; ++i) {
+        Eigen::Matrix4f pair_transform = Eigen::Matrix4f::Identity();
 
-        spdlog::info("Align: No.{:0>3} to No.{:0>3}", i, i + 1);
-        pcl::io::loadPCDFile(this->cloud_files[i - 1], *source);
-        pcl::io::loadPCDFile(this->cloud_files[i], *target);
+        pcl_cloud source(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl_cloud target(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl_cloud result(new pcl::PointCloud<pcl::PointXYZ>);
+
+        spdlog::info("[P{:0>3}] Align: No.{:0>3} to No.{:0>3}", i, i, i + 1);
+        source = clouds[i - 1];
+        target = clouds[i];
 
         this->show_clouds_left(source, target);
 
-        pcl_cloud temp(new pcl::PointCloud<pcl::PointXYZ>);
-
-        pair_align(source, target, temp, pair_transform, i);
-
-        pcl::transformPointCloud(*temp, *result, this->global_transform);
+        pair_align(source, target, result, pair_transform, i);
 
         // Update and log transform
-        this->global_transform *= pair_transform;
         std::stringstream logStream;
-        logStream << "Pair transform: \n" << pair_transform.array();
-        spdlog::info(logStream.str());
-        logStream.str("");
-        logStream << "Global transform: \n" << this->global_transform.array();
+        logStream << "[P" << std::setw(3) << std::setfill('0') << i << "] "
+                  << "Pair transform: \n"
+                  << pair_transform.array();
         spdlog::info(logStream.str());
 
         std::stringstream ss;
@@ -220,24 +226,11 @@ void tdr::pointcloud_aligner::align() {
 
         ss.str("");
         ss << config.file_save_directory << "/" << fmt::format("{:0>3}", i)
-           << "_transform_formatted.txt";
-        std::ofstream ofs(ss.str());
-        ofs << "Pair transform: \n" << pair_transform.array() << std::endl;
-        ofs << "Global transform: \n"
-            << this->global_transform.array() << std::endl;
-        ofs.flush();
-        ofs.close();
-
-        ss.str("");
-        ss << config.file_save_directory << "/" << fmt::format("{:0>3}", i)
            << "_transform.txt";
         tdr::utils::matrix::write_matrix4f_to_file(pair_transform, ss.str());
 
         ss.clear();
     }
-}
-Eigen::Matrix4f tdr::pointcloud_aligner::get_global_transform() {
-    return this->global_transform;
 }
 
 void tdr::pointcloud_aligner::clean_visualization() {

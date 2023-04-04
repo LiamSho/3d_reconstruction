@@ -194,6 +194,16 @@ struct pointcloud_aligner_command {
                                       .name("-z")
                                       .name("--visualization")
                                       .help("Enable visualization"))
+#ifdef USE_OPENMP
+                    .add_argument(
+                        lyra::opt(config.threads, "count")
+                            .optional()
+                            .name("-t")
+                            .name("--threads")
+                            .help(
+                                "Threads to use, default to -1, a value <= 0 "
+                                "will be considered as all available threads"))
+#endif
                     .add_argument(
                         lyra::opt(config.iteration_count, "count")
                             .optional()
@@ -215,7 +225,7 @@ struct pointcloud_aligner_command {
                                             "epsilon, default to 1e-6"))
                     .add_argument(lyra::opt(config.distance_threshold, "value")
                                       .optional()
-                                      .name("-t")
+                                      .name("-l")
                                       .name("--threshold")
                                       .help("Set the ICP distance threshold, "
                                             "default to 0.05"))
@@ -246,10 +256,6 @@ struct pointcloud_aligner_command {
         aligner.align();
 
         spdlog::info("Pointcloud aligner module finished");
-
-        std::stringstream ss;
-        ss << aligner.get_global_transform().array();
-        spdlog::info("Global transform: \n{}", ss.str());
     }
 };
 

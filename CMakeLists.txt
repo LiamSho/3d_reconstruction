@@ -24,9 +24,16 @@ find_package(PCL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
+find_package(OpenMP)
+
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
+
+if (OpenMP_CXX_FOUND)
+    add_definitions(-DUSE_OPENMP)
+    link_libraries(OpenMP::OpenMP_CXX)
+endif ()
 
 link_libraries(
         ${realsense2_LIBRARY}

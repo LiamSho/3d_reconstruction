@@ -28,6 +28,10 @@ struct pointcloud_aligner_configuration {
     std::string file_save_directory{"icp_align"};
     std::string source_files_directory{"source"};
 
+#ifdef USE_OPENMP
+    int threads = -1;
+#endif
+
     bool visualization = false;
     uint iteration_count = 30;
     int k_search = 30;
@@ -49,7 +53,6 @@ class AlignerPointRepresentation
 class pointcloud_aligner {
   private:
     std::vector<std::filesystem::path> cloud_files;
-    Eigen::Matrix4f global_transform;
 
     pcl::visualization::PCLVisualizer *visualizer;
     int v_vp_1 = 1;
@@ -67,8 +70,6 @@ class pointcloud_aligner {
   public:
     explicit pointcloud_aligner(const pointcloud_aligner_configuration &config);
     void align();
-
-    Eigen::Matrix4f get_global_transform();
 };
 
 } // namespace tdr
