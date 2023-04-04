@@ -18,6 +18,7 @@
 #define INC_3D_RECONSTRUCTION_POINTCLOUD_ALIGNER_HPP
 
 #include "../../utils/pcl_type_definition.hpp"
+#include <filesystem>
 #include <pcl/point_cloud.h>
 #include <pcl/point_representation.h>
 #include <pcl/visualization/pcl_visualizer.h>
