@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 enable_language(C)
 enable_language(CXX)
 
+option(BUILD_WITH_CUDA "Build CUDA powered components" OFF)
+
 message("-- Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -18,6 +20,19 @@ elseif (MSVC)
 endif ()
 
 include_directories(./include)
+
+if (BUILD_WITH_CUDA)
+    message("-- CUDA: ON")
+    add_definitions(-DUSE_CUDA)
+    set(BUILD_VGICP_CUDA ON CACHE BOOL "Build GPU-powered VGICP" FORCE)
+else ()
+    message("-- CUDA: OFF")
+endif ()
+
+set(BUILD_apps OFF CACHE BOOL "Build application programs" FORCE)
+
+add_subdirectory(./include/fast_gicp)
+include_directories(./include/fast_gicp/include)
 
 find_package(realsense2 CONFIG REQUIRED)
 find_package(PCL REQUIRED)
@@ -40,6 +55,7 @@ link_libraries(
         ${PCL_LIBRARIES}
         spdlog::spdlog_header_only
         glfw
+        fast_gicp
 )
 
 add_subdirectory(src)

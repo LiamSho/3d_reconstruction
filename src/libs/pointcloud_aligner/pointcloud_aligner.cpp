@@ -22,11 +22,15 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
-#include <pcl/registration/icp_nl.h>
 #include <pcl/registration/transforms.h>
 #include <spdlog/spdlog.h>
-#include <utility>
 #include <vector>
+
+#ifdef USE_CUDA
+#include <fast_gicp/gicp/fast_vgicp_cuda.hpp>
+#else
+#include <pcl/registration/icp_nl.h>
+#endif
 
 tdr::AlignerPointRepresentation::AlignerPointRepresentation() {
     this->nr_dimensions_ = 4;
@@ -107,7 +111,11 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     point_rep.setRescaleValues(alpha);
 
     // Align
+#ifdef USE_CUDA
+    fast_gicp::FastVGICPCuda<pcl::PointNormal, pcl::PointNormal> reg;
+#else
     pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> reg;
+#endif
     reg.setTransformationEpsilon(config.epsilon);
     reg.setMaxCorrespondenceDistance(config.distance_threshold);
     reg.setPointRepresentation(
@@ -192,6 +200,12 @@ void tdr::pointcloud_aligner::align() {
         pcl::io::loadPCDFile(f, *cloud);
         clouds.push_back(cloud);
     }
+
+#ifdef USE_CUDA
+    spdlog::info("CUDA is enabled. Will run VGICP on CUDA.");
+#else
+    spdlog::info("CUDA is disabled. Will run PCL builtin ICP with L-M method on CPU.");
+#endif
 
 #ifdef USE_OPENMP
     omp_set_num_threads(config.threads);
