@@ -8,19 +8,6 @@ enable_language(C)
 enable_language(CXX)
 
 option(BUILD_WITH_CUDA "Build CUDA powered components" OFF)
-
-message("-- Compiler: ${CMAKE_CXX_COMPILER_ID}")
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-ignored-optimization-argument)
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-ignored-optimization-argument)
-elseif (MSVC)
-    add_compile_options(/W4 /WX)
-endif ()
-
-include_directories(./include)
-
 if (BUILD_WITH_CUDA)
     message("-- CUDA: ON")
     add_definitions(-DUSE_CUDA)
@@ -28,11 +15,10 @@ if (BUILD_WITH_CUDA)
 else ()
     message("-- CUDA: OFF")
 endif ()
-
 set(BUILD_apps OFF CACHE BOOL "Build application programs" FORCE)
 
 add_subdirectory(./include/fast_gicp)
-include_directories(./include/fast_gicp/include)
+include_directories(./include)
 
 find_package(realsense2 CONFIG REQUIRED)
 find_package(PCL REQUIRED)

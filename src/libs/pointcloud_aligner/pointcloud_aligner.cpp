@@ -18,13 +18,18 @@
 
 #include "../../utils/fs_utils.hpp"
 #include "../../utils/matrix_util.hpp"
-#include <pcl/features/normal_3d.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/transforms.h>
 #include <spdlog/spdlog.h>
 #include <vector>
+
+#ifdef USE_OPENMP
+#include <pcl/features/normal_3d_omp.h>
+#else
+#include <pcl/features/normal_3d.h>
+#endif
 
 #ifdef USE_CUDA
 #include <fast_gicp/gicp/fast_vgicp_cuda.hpp>
@@ -83,7 +88,11 @@ void tdr::pointcloud_aligner::pair_align(const pcl_cloud &pc_src,
     pcl_cloud_normal points_with_normals_tgt(
         new pcl::PointCloud<pcl::PointNormal>);
 
+#ifdef USE_OPENMP
+    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> norm_set;
+#else
     pcl::NormalEstimation<pcl::PointXYZ, pcl::PointNormal> norm_set;
+#endif
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
         new pcl::search::KdTree<pcl::PointXYZ>);
 
@@ -207,10 +216,6 @@ void tdr::pointcloud_aligner::align() {
     spdlog::info("CUDA is disabled. Will run PCL builtin ICP with L-M method on CPU.");
 #endif
 
-#ifdef USE_OPENMP
-    omp_set_num_threads(config.threads);
-#pragma omp parallel for default(none) shared(pc_count) shared(clouds)
-#endif
     for (size_t i = 1; i < pc_count; ++i) {
         Eigen::Matrix4f pair_transform = Eigen::Matrix4f::Identity();
 
