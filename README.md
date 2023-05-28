@@ -8,12 +8,18 @@ The goal of this project is reconstruct a 3d point cloud from RGBD data captured
 
 Operating System: Ubuntu 22.04 and macOS 13 are tested. Windows is not supported, use WSL2 instead.
 
+CUDA support only works on Linux or WSL2 with NVIDIA GPU and Clang 14 or G++ 12 compiler. You need to install NVIDIA
+driver and CUDA toolkit 12 first.
+
 Libraries:
 
 - librealsense2
 - PCL
 - glfw3
 - spdlog
+- lyra
+- fast_gicp
+- OpenMP
 
 Compiler:
 
@@ -35,6 +41,8 @@ make
 ```
 
 Change `clang` to `g++-12` if you want to use G++ 12.
+
+Add `-DBUILD_WITH_CUDA=ON` to enable CUDA support.
 
 For macOS 13:
 
